@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fence E-COC</title>
+<meta name="theme-color" content="#1f2a37">
+<meta name="description" content="Electric Fence System Certificates of Compliance and Inspection &amp; Test Reports - works offline">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fence E-COC">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="bolt">&#9889;</span>Fence E-COC</div>
+  <nav class="topbtns">
+    <button id="btnSettings" title="Settings"><span>&#9881;</span>Settings</button>
+    <button id="btnInstall" title="Install"><span>&#11015;</span>Install</button>
+    <button id="btnUpdate" title="Update"><span>&#8635;</span>Update</button>
+    <button id="btnShare" title="Share"><span>&#10150;</span>Share</button>
+  </nav>
+</header>
+
+<main id="app"></main>
+
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="sheet" id="modalSheet"></div>
+</div>
+<div id="toast" class="toast hidden"></div>
+
+<script src="pdf-lib.min.js"></script>
+<script src="config.js"></script>
+<script src="disclaimer.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

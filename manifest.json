@@ -1,0 +1,17 @@
+{
+  "name": "Fence E-COC – Electric Fence Certificates of Compliance",
+  "short_name": "Fence E-COC",
+  "description": "Create Electric Fence System Certificates of Compliance and Inspection & Test Reports offline.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f5f2",
+  "theme_color": "#1f2a37",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
