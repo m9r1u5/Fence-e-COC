@@ -113,4 +113,9 @@ body.locked .topbtns button:not(#btnInstall){opacity:.35}
 .swatch{width:38px;height:38px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px #9aa3ad}
 .swatch.on{box-shadow:0 0 0 3px var(--ink)}
 .mapwrap{width:100%;display:flex;justify-content:center}
-.mapcanvas{border:2px solid var(--ink);border-radius:6px;background:#fff;touch-action:none;display:block}
+.mapcanvas{background:#fff;touch-action:none;display:block}
+.mapsq{border:2px solid var(--ink);background:#fff;overflow:hidden}
+.mapsq .leg{display:block;width:100%;height:auto;border-bottom:1px solid var(--ink);background:#fff}
+.mapsq .area{display:flex;align-items:center;justify-content:center;background:#fff repeating-linear-gradient(0deg,transparent 0 13px,#e3e8e3 13px 14px),repeating-linear-gradient(90deg,transparent 0 13px,#e3e8e3 13px 14px),#fff}
+.mapsq .area img{width:100%;height:100%;object-fit:contain;display:block;background:#fff}
+.mapsq .ph{color:var(--muted);font-size:13px;background:#fff;padding:2px 8px;border-radius:6px;text-align:center}

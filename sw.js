@@ -1,9 +1,9 @@
 /* Fence E-COC service worker – keeps the app working offline.
    When you upload a new version, change VERSION here, in config.js and in version.json. */
-const VERSION = '1.0.1';
+const VERSION = '1.0.2';
 const CACHE = 'fence-ecoc-' + VERSION;
 const FILES = ['./', 'index.html', 'style.css', 'app.js', 'config.js', 'disclaimer.js', 'pdf-lib.min.js', 'manifest.json',
-  'coc-template.pdf', 'test-report-template.pdf', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png'];
+  'coc-template.pdf', 'test-report-template.pdf', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'site-map-legend.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES.map(f => new Request(f, { cache: 'reload' })))).then(() => self.skipWaiting()));

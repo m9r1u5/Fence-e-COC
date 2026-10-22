@@ -227,6 +227,10 @@ function trimCanvas(c) {
    photo/scan underneath, data.siteMap = finished picture printed on the PDF. */
 const MAP_BOX = PDF_FIELDS.tr.siteMap;
 const MAP_RATIO = MAP_BOX.w / MAP_BOX.h;
+/* Your legend sits at the top of the same square, above the drawing area (site-map-legend.png = the printed legend band) */
+const LEGEND_SRC = 'site-map-legend.png';
+const LEGEND_RATIO = 2960 / 313;
+const legendImg = () => el('img', { class: 'leg', src: LEGEND_SRC, alt: 'Legend: earth spikes, warning signs, fence wires, dual lightning protector below the energizer, tubing brackets, lines' });
 const MAP_COLORS = [['#111111', 'Black'], ['#c62828', 'Red'], ['#1565c0', 'Blue'], ['#2e7d32', 'Green']];
 async function paintMap(ctx, W, H, ops, bg, withGrid) {
   ctx.clearRect(0, 0, W, H);
@@ -262,8 +266,9 @@ async function paintMap(ctx, W, H, ops, bg, withGrid) {
   ctx.drawImage(layer, 0, 0);
 }
 function mapWidget(it, data, changed) {
-  const box = el('div', { class: 'mapprev' });
-  const show = () => box.replaceChildren(data.siteMap ? el('img', { src: data.siteMap, alt: 'site map' }) : el('span', { class: 'ph' }, 'No site map yet'));
+  const area = el('div', { class: 'area', style: 'aspect-ratio:' + MAP_RATIO });
+  const box = el('div', { class: 'mapsq' }, legendImg(), area);
+  const show = () => area.replaceChildren(data.siteMap ? el('img', { src: data.siteMap, alt: 'site map' }) : el('span', { class: 'ph' }, 'Draw here, or leave blank and draw by hand after printing'));
   show();
   return el('div', {}, box, el('div', { class: 'row', style: 'margin-top:6px' },
     el('button', { type: 'button', class: 'btn small paper', onclick: () => openMapEditor(data, () => { show(); changed(); }) }, data.siteMap ? '✏ Edit site map' : '✏ Draw site map'),
@@ -291,7 +296,8 @@ function openMapEditor(data, onDone) {
   let tool = 'pen', color = MAP_COLORS[0][0], size = 'm';
   const SIZES = { s: 0.0022, m: 0.0042, l: 0.008 };
   const c = el('canvas', { class: 'mapcanvas' });
-  const wrap = el('div', { class: 'mapwrap' }, c);
+  const frame = el('div', { class: 'mapsq' }, legendImg(), c);
+  const wrap = el('div', { class: 'mapwrap' }, frame);
   const bar = el('div', { class: 'maptools' });
   const redraw = async () => { await paintMap(c.getContext('2d'), c.width, c.height, ops, bg, true); };
   const drawBar = () => bar.replaceChildren(...[
@@ -317,8 +323,10 @@ function openMapEditor(data, onDone) {
   $('#modalSheet').classList.add('wide');
   const fit = () => {
     const maxW = wrap.clientWidth, maxH = Math.max(160, window.innerHeight * 0.62);
-    let w = maxW, h = w / MAP_RATIO; if (h > maxH) { h = maxH; w = h * MAP_RATIO; }
-    c.style.width = w + 'px'; c.style.height = h + 'px';
+    const k = 1 / MAP_RATIO + 1 / LEGEND_RATIO;          // total height per unit width (legend + drawing area)
+    let w = maxW - 4; if (w * k > maxH) w = maxH / k;
+    const h = w / MAP_RATIO;
+    frame.style.width = (w + 4) + 'px'; c.style.width = w + 'px'; c.style.height = h + 'px';
     const dpr = Math.min(window.devicePixelRatio || 1, 2.5); c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); redraw();
   };
   fit();
