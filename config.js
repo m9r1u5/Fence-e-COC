@@ -6,7 +6,7 @@
    APP_URL     : your GitHub Pages address (used by the Share button).
    APK_URL     : your Releases page (the Android app's Update button opens it).
    ===================================================================== */
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.0.1';
 const APP_URL = 'https://m9r1u5.github.io/Fence-e-COC/';
 const GITHUB_REPO = 'm9r1u5/Fence-e-COC';  // owner/repo – the Android app's Update button checks this repo's Releases
 const APK_URL = 'https://github.com/m9r1u5/Fence-e-COC/releases/latest';   // where the Android app (APK) can be downloaded
@@ -130,7 +130,7 @@ const PDF_FIELDS = {
       'no': {x: 536.8, y: 368.5, w: 27, h: 15},
     } },
     comments: {x: 34, y: 411, w: 527.3, size: 7.5, wrap: {x: 34, w: 527.3, gap: 15}},
-    siteMap: {type: 'map', x: 31, y: 539, w: 533.3, h: 282},
+    siteMap: {type: 'map', x: 31, y: 597, w: 533.3, h: 224},   // drawing area under the legend
     _ref: {type: 'ref', x: 30, y: 834, w: 535.3, size: 6.5},
   },
 };

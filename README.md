@@ -65,6 +65,7 @@ On Android you can also install the web version: open the link in Chrome → **I
 * To move one field, change its `x` or `y` in the `PDF_FIELDS` list in `config.js`.
 * **Logos:** Settings → Logos – add a cropped picture of the coat of arms (COC, top-left) and the ECA logo (COC and test report, top-right).
 * **Use your own blank form:** Settings → Form templates → *Upload blank form*. Use a flat, straight scan of an **unfilled** form, as PDF or JPG. Then print an alignment test and adjust positions in `config.js`.
+* **Site map legend:** the legend at the top of the map square comes from `tools/site-map-legend.pdf` (your drawing). To change it, replace that file and run `node tools/make-templates.js` on a computer – it rebuilds both blank templates.
 * Text colour, circle colour, tick style (✓ or X), date format and how many digits the certificate number has (`NUMBER_DIGITS`) are at the top of `config.js`.
 
 ## Releasing an update
