@@ -56,7 +56,28 @@ On Android you can also install the web version: open the link in Chrome → **I
    * **All reports – one PDF** and **COC + all reports** put everything into a single PDF to share or print.
    * Each printed test report carries a small reference line at the bottom (certificate number, report number, zone and address) so loose pages always match their COC. Switch it off in **Settings → Test reports** if you don't want it.
 4. **Print / PDF** → *Share* (WhatsApp, email…), *Save to phone* or *Print / Open*.
-5. **Settings → Backup all data** before changing phones; **Restore from file** on the new phone.
+5. **Settings → Backup all data** before changing phones; **Restore from file** on the new phone. To use the app on a phone *and* a PC, turn on sync (below).
+
+## Sync between phone and PC
+
+Your certificates, test reports, certificate numbers, default details and logos can stay the same on every phone and PC. Sync works the same way as in the Training Scheduler: each device uses a **private GitHub repository** as a shared cloud copy.
+
+**Set it up once**
+1. On github.com tap **+** → **New repository**. Name it `Fence-e-COC-data`, choose **Private** and tap **Create repository**. Keep it separate from this app's repo.
+2. Tap your profile picture → **Settings** → **Developer settings** → **Personal access tokens** → **Fine-grained tokens** → **Generate new token**.
+3. Name: *Fence E-COC sync*. Expiration: the longest offered. Repository access: **Only select repositories** → `Fence-e-COC-data`.
+4. **Permissions** → **Repository permissions** → **Contents** → **Read and write**. Tap **Generate token** and copy it.
+5. In Fence E-COC on **every** phone and PC: **Settings → Sync between phone and PC** → enter `m9r1u5/Fence-e-COC-data`, paste the token → **Save & sync now**.
+
+**How it works**
+* Syncing happens by itself a few seconds after you save, when you open the app, when the internet comes back and every 5 minutes. You can also tap **Sync now** on the home screen.
+* Without internet everything still works; changes are sent later.
+* Each certificate is its own file (`fence-e-coc/cocs/<id>.json`), so only changed certificates are sent.
+* If both devices change the same certificate, the newest change of the COC details wins and the newest change of each test report wins. Test reports added on different devices are all kept, and deletions are carried across.
+* If both devices already had certificates when you first turn sync on, they are combined. Nothing is deleted.
+* **Certificate numbers:** before a new COC takes its number, the app fetches the numbers used on your other devices. If two devices both issue a certificate while **offline**, they can get the same number. The home screen then shows a red warning so you can re-issue one under a new number.
+* Keep the token private: anyone who has it can read your certificate data. When it expires, make a new one and paste it in on each device.
+* Your own uploaded blank-form templates and your acceptance of the Terms stay on each device.
 
 ## Making the PDFs match perfectly
 

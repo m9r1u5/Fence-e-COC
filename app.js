@@ -55,8 +55,10 @@ const DB = {
       t.oncomplete = () => res(req ? req.result : undefined); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
     });
   },
-  async all() { return ((await this.tx('cocs', 'readonly', s => s.getAll())) || []).map(normRec); },
-  async get(id) { const r = await this.tx('cocs', 'readonly', s => s.get(id)); return r ? normRec(r) : r; },
+  async allRaw() { return ((await this.tx('cocs', 'readonly', s => s.getAll())) || []).map(normRec); },   // includes deleted ones (kept so the delete syncs)
+  async all() { return (await this.allRaw()).filter(r => !r.deleted); },
+  async getRaw(id) { const r = await this.tx('cocs', 'readonly', s => s.get(id)); return r ? normRec(r) : r; },
+  async get(id) { const r = await this.getRaw(id); return r && !r.deleted ? r : undefined; },
   put(r) { return this.tx('cocs', 'readwrite', s => s.put(r)); },
   del(id) { return this.tx('cocs', 'readwrite', s => s.delete(id)); },
   clearCocs() { return this.tx('cocs', 'readwrite', s => s.clear()); },
@@ -69,7 +71,7 @@ function normRec(r) { if (!Array.isArray(r.trs)) r.trs = []; return r; }
 let S = null; // settings
 const DEFAULT_SETTINGS = { nextNo: 1, used: [], defaults: {}, logoCoc: '', logoTr: '', printRef: true };
 async function loadSettings() { S = Object.assign(clone(DEFAULT_SETTINGS), (await DB.getKV('settings')) || {}); }
-const saveSettings = () => DB.setKV('settings', S);
+function saveSettings(fromSync) { if (!fromSync) { S.updated = Date.now(); scheduleSync(); } return DB.setKV('settings', S); }
 function previewNumber() { const used = new Set(S.used); let n = Number(S.nextNo) || 1; while (used.has(n)) n++; return n; }
 async function allocateNumber() {
   const n = previewNumber();
@@ -533,8 +535,8 @@ let dirty = false;
 const markDirty = () => { dirty = true; };
 function guard() { if (!dirty) return true; if (confirm('You have unsaved changes. Leave without saving?')) { dirty = false; return true; } return false; }
 function nav(v, id, replace) { const st = { v, id }; replace ? history.replaceState(st, '') : history.pushState(st, ''); lastState = st; route(st); }
-async function route(st) {
-  dirty = false; closeModal(); window.scrollTo(0, 0);
+async function route(st, keepScroll) {
+  dirty = false; closeModal(); if (!keepScroll) window.scrollTo(0, 0);
   if (!termsAccepted()) return gateView();
   st = st || { v: 'home' };
   if (st.v === 'coc') { const r = st.id === 'new' ? newCoc() : (st.id && st.id.startsWith('dup:') ? await dupCoc(st.id.slice(4)) : await DB.get(st.id)); if (r) return cocView(r); }
@@ -577,7 +579,9 @@ async function homeView() {
   app().replaceChildren(
     el('div', { class: 'row' }, el('button', { class: 'btn primary', style: 'flex:1;font-size:17px', onclick: () => nav('coc', 'new') }, '＋ New Fence COC')),
     el('div', { class: 'note', style: 'margin-top:8px' }, 'Next number: ', el('b', {}, numLabel(previewNumber())), '  ·  ', recs.length + ' saved'),
-    search, list, el('div', { class: 'ver' }, 'Fence E-COC v' + APP_VERSION + ' · for registered electric fence installers only · data is stored on this phone only — back it up in Settings · ', el('a', { href: '#', onclick: e => { e.preventDefault(); showTerms(); } }, 'Terms of use')));
+    syncOn() ? el('div', { class: 'note syncline' }, '☁ ', el('span', { class: 'syncst' }, syncStatusText()), ' · ', el('a', { href: '#', onclick: e => { e.preventDefault(); syncNow(true); } }, 'Sync now')) : null,
+    ...duplicateNumbers(recs).map(n => el('div', { class: 'card warn' }, '⚠ ', el('b', {}, numLabel(n)), ' was issued on two devices before they synced, so two certificates now have this number. Open the one that has not been handed over, tap “New COC, same details” to re-issue it under a new number, then delete the duplicate.')),
+    search, list, el('div', { class: 'ver' }, 'Fence E-COC v' + APP_VERSION + ' · for registered electric fence installers only · ' + (syncOn() ? 'synced with your other devices through your private GitHub repository' : 'data is stored on this device only — back it up or turn on sync in Settings') + ' · ', el('a', { href: '#', onclick: e => { e.preventDefault(); showTerms(); } }, 'Terms of use')));
   draw();
 }
 function cocCard(r) {
@@ -593,14 +597,14 @@ function cocCard(r) {
       el('button', { class: 'btn small', onclick: () => nav('coc', 'dup:' + r.id) }, '⧉ New COC, same details'),
       el('button', { class: 'btn small danger', onclick: async () => {
         if (!confirm(`Delete ${numLabel(r.certNo)} and its ${r.trs.length} test report(s)?\nThe number will NOT be reused.`)) return;
-        await DB.del(r.id); toast('Deleted'); homeView();
+        await deleteRec(r); toast('Deleted'); homeView();
       } }, '🗑 Delete')));
 }
 
 async function saveCoc(rec) {
-  if (rec.certNo === null || rec.certNo === undefined) rec.certNo = await allocateNumber();
-  rec.updated = Date.now();
-  await DB.put(rec); dirty = false;
+  if (rec.certNo === null || rec.certNo === undefined) { await syncBeforeNumber(); rec.certNo = await allocateNumber(); }
+  rec.dataUpdated = Date.now();
+  await saveRec(rec); dirty = false;
 }
 function cocView(rec) {
   const isNew = rec.certNo === null || rec.certNo === undefined;
@@ -628,7 +632,7 @@ function newTestReport(rec, copyFrom) {
     data = {};
     TR_DEFAULT_KEYS.forEach(k => { if (S.defaults[k]) data[k] = S.defaults[k]; });
   }
-  const t = { id: uid(), data, created: Date.now() };
+  const now = Date.now(), t = { id: uid(), data, created: now, updated: now };
   rec.trs.push(t); return t;
 }
 const trLabel = (rec, t) => 'Test Report ' + trIndex(rec, t) + (t.data.trFor ? ' · ' + t.data.trFor : '');
@@ -645,10 +649,10 @@ function trListView(rec) {
       el('div', { class: 'row' },
         el('button', { class: 'btn small paper', onclick: () => nav('tr', rec.id + ':' + t.id) }, '✎ Open'),
         el('button', { class: 'btn small', onclick: () => pdfFor(rec, 'tr', t) }, '🖨 PDF'),
-        el('button', { class: 'btn small', onclick: async () => { const c = newTestReport(rec, t); await DB.put(rec); nav('tr', rec.id + ':' + c.id); toast('Copied – enter the zone, S/N, kV reading and site map'); } }, '⧉ Copy'),
+        el('button', { class: 'btn small', onclick: async () => { const c = newTestReport(rec, t); await saveRec(rec); nav('tr', rec.id + ':' + c.id); toast('Copied – enter the zone, S/N, kV reading and site map'); } }, '⧉ Copy'),
         el('button', { class: 'btn small danger', onclick: async () => {
           if (!confirm('Delete ' + trLabel(rec, t) + '?')) return;
-          rec.trs.splice(rec.trs.indexOf(t), 1); rec.updated = Date.now(); await DB.put(rec); toast('Deleted'); trListView(rec);
+          rec.delTrs = rec.delTrs || {}; rec.delTrs[t.id] = Date.now(); rec.trs.splice(rec.trs.indexOf(t), 1); await saveRec(rec); toast('Deleted'); trListView(rec);
         } }, '🗑')))) : [el('div', { class: 'empty' }, rec.trs.length ? 'No matches.' : 'No test reports yet. Tap “New test report”.')]));
   };
   search.oninput = draw;
@@ -657,8 +661,8 @@ function trListView(rec) {
     el('div', { class: 'formhead' }, el('button', { class: 'btn small', onclick: () => history.back() }, '‹ Back'), el('h2', {}, 'Test Reports · ' + numLabel(rec.certNo))),
     el('p', { class: 'note' }, rec.trs.length + ' inspection & test report' + (rec.trs.length === 1 ? '' : 's') + ' linked to this COC. A new report starts with your saved energizer make and test meter. “Copy” starts a new report from an existing one (fence type, inspection answers, comments), so only the zone, S/N, kV reading and site map need entering.'),
     el('div', { class: 'row' },
-      el('button', { class: 'btn primary', onclick: async () => { const t = newTestReport(rec); await DB.put(rec); nav('tr', rec.id + ':' + t.id); } }, '＋ New test report'),
-      last ? el('button', { class: 'btn paper', onclick: async () => { const t = newTestReport(rec, last); await DB.put(rec); nav('tr', rec.id + ':' + t.id); toast('Copied from report ' + (rec.trs.length - 1)); } }, '⧉ Copy last report') : null),
+      el('button', { class: 'btn primary', onclick: async () => { const t = newTestReport(rec); await saveRec(rec); nav('tr', rec.id + ':' + t.id); } }, '＋ New test report'),
+      last ? el('button', { class: 'btn paper', onclick: async () => { const t = newTestReport(rec, last); await saveRec(rec); nav('tr', rec.id + ':' + t.id); toast('Copied from report ' + (rec.trs.length - 1)); } }, '⧉ Copy last report') : null),
     rec.trs.length ? el('div', { class: 'row', style: 'margin-top:8px' },
       el('button', { class: 'btn small', onclick: () => pdfAll(rec, false) }, '🖨 All reports – one PDF'),
       el('button', { class: 'btn small', onclick: () => pdfAll(rec, true) }, '🖨 COC + all reports')) : null,
@@ -668,7 +672,7 @@ function trListView(rec) {
 
 function trView(rec, t) {
   const n = trIndex(rec, t);
-  const save = async (msg = true) => { t.updated = Date.now(); rec.updated = Date.now(); await DB.put(rec); dirty = false; if (msg) toast('Test report ' + n + ' saved'); };
+  const save = async (msg = true) => { t.updated = Date.now(); rec.updated = Date.now(); await saveRec(rec); dirty = false; if (msg) toast('Test report ' + n + ' saved'); };
   app().replaceChildren(
     el('div', { class: 'formhead' }, el('button', { class: 'btn small', onclick: () => history.back() }, '‹ Back'), el('h2', {}, 'Test Report ' + n + ' of ' + rec.trs.length + ' · ' + numLabel(rec.certNo))),
     el('p', { class: 'note' }, 'Annex I – Inspection and tests (SANS 10222-3). Blue fields came from your saved defaults – you can still change them.'),
@@ -677,7 +681,7 @@ function trView(rec, t) {
     el('div', { id: 'trBody' }),
     el('div', { class: 'actions' },
       el('button', { class: 'btn primary', onclick: () => save() }, '💾 Save'),
-      el('button', { class: 'btn paper', onclick: async () => { await save(false); const c = newTestReport(rec, t); await DB.put(rec); nav('tr', rec.id + ':' + c.id, true); toast('Saved. New copy started – enter the next zone'); } }, '⧉ Save & copy'),
+      el('button', { class: 'btn paper', onclick: async () => { await save(false); const c = newTestReport(rec, t); await saveRec(rec); nav('tr', rec.id + ':' + c.id, true); toast('Saved. New copy started – enter the next zone'); } }, '⧉ Save & copy'),
       el('button', { class: 'btn accent', onclick: async () => { await save(false); pdfFor(rec, 'tr', t); } }, '🖨 PDF')));
   const body = () => $('#trBody').replaceChildren(...renderSchema(TR_SCHEMA, t.data, { onChange: markDirty, defaults: S.defaults, fromDefaults: TR_DEFAULT_KEYS.filter(k => S.defaults[k] && S.defaults[k] === t.data[k]) }));
   body();
@@ -787,6 +791,7 @@ function settingsView() {
         if (S.used.includes(n) && !confirm(`${numLabel(n)} was already used. The app will skip to the next unused number. Continue?`)) return;
         S.nextNo = n; await saveSettings(); startInp.value = previewNumber(); toast('Next number: ' + numLabel(previewNumber()));
       } }, 'Save number')),
+    syncSettingsCard(),
     el('fieldset', {}, el('legend', {}, 'My default details'),
       el('p', { class: 'note' }, 'Your details are filled in on every new COC; the energizer make and test meter on every new test report. Signatures saved here can be added with one tap (“Use saved”).'),
       ...renderSchema(COC_SCHEMA, defaults, {}, DEFAULT_KEYS).map(fs => { fs.style.border = '0'; fs.style.padding = '0'; return fs; }),
@@ -910,10 +915,11 @@ async function doShare() {
   $('#btnSettings').onclick = () => { if (!termsAccepted()) return toast('Please accept the Terms of Use first'); if (history.state && history.state.v === 'settings') return; if (guard()) nav('settings'); };
   $('#btnInstall').onclick = doInstall; $('#btnUpdate').onclick = doUpdate; $('#btnShare').onclick = doShare;
   if (isCap()) $('#btnInstall').classList.add('hidden');
-  try { await DB.open(); await loadSettings(); }
+  try { await DB.open(); await loadSettings(); await loadSyncCfg(); }
   catch (e) { app().textContent = 'Storage is not available on this browser: ' + e.message; return; }
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => { });
   if ('serviceWorker' in navigator && !isCap() && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW', e));
   if (!history.state) history.replaceState({ v: 'home' }, '');
   lastState = history.state; route(history.state);
+  startAutoSync();
 })();

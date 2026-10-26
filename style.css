@@ -54,7 +54,7 @@ legend{font-weight:800;padding:0 6px;font-size:15px}
 .note{font-size:13px;color:var(--ink2);margin:6px 0}
 .f{margin:10px 0}
 .f>label{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:4px}
-.f input[type=text],.f input[type=date],.f input[type=tel],.f input[type=email],.f input[type=number],.f textarea,.f select{width:100%;min-height:var(--tap);border:1px solid #cfd4da;border-radius:10px;padding:8px 12px;background:#fbfbfb}
+.f input[type=text],.f input[type=date],.f input[type=tel],.f input[type=email],.f input[type=number],.f input[type=password],.f textarea,.f select{width:100%;min-height:var(--tap);border:1px solid #cfd4da;border-radius:10px;padding:8px 12px;background:#fbfbfb}
 .f textarea{min-height:76px;resize:vertical}
 .f input:focus,.f textarea:focus{outline:2px solid var(--accent);border-color:transparent;background:#fff}
 .f.imported input,.f.imported textarea{background:#f2f7ff;border-color:#b6cdf2}
@@ -119,3 +119,9 @@ body.locked .topbtns button:not(#btnInstall){opacity:.35}
 .mapsq .area{display:flex;align-items:center;justify-content:center;background:#fff repeating-linear-gradient(0deg,transparent 0 13px,#e3e8e3 13px 14px),repeating-linear-gradient(90deg,transparent 0 13px,#e3e8e3 13px 14px),#fff}
 .mapsq .area img{width:100%;height:100%;object-fit:contain;display:block;background:#fff}
 .mapsq .ph{color:var(--muted);font-size:13px;background:#fff;padding:2px 8px;border-radius:6px;text-align:center}
+
+/* sync */
+.syncline{margin-top:2px}.syncline a{color:var(--accent);font-weight:600}
+.syncst.bad{color:var(--danger)}
+.card.warn{border-color:#f2c4c4;background:#fff5f5;color:#8a1c1c;font-size:14px}
+details.howto{margin-top:10px}details.howto summary{font-weight:700;cursor:pointer;padding:6px 0}

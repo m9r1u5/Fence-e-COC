@@ -6,7 +6,7 @@
    APP_URL     : your GitHub Pages address (used by the Share button).
    APK_URL     : your Releases page (the Android app's Update button opens it).
    ===================================================================== */
-const APP_VERSION = '1.0.2';
+const APP_VERSION = '1.1.0';
 const APP_URL = 'https://m9r1u5.github.io/Fence-e-COC/';
 const GITHUB_REPO = 'm9r1u5/Fence-e-COC';  // owner/repo – the Android app's Update button checks this repo's Releases
 const APK_URL = 'https://github.com/m9r1u5/Fence-e-COC/releases/latest';   // where the Android app (APK) can be downloaded
