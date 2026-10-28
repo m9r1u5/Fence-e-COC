@@ -75,6 +75,10 @@ jobs:
         with:
           tag_name: v${{ steps.ver.outputs.version }}-build${{ github.run_number }}
           name: Fence E-COC ${{ steps.ver.outputs.version }} (build ${{ github.run_number }})
-          body: Download the .apk file below on your Android phone and open it to install.
+          body: |
+            Android APK for Fence E-COC ${{ steps.ver.outputs.version }} (build ${{ github.run_number }}).
+            Download **Fence-e-COC-${{ steps.ver.outputs.version }}.apk** below, open it, and allow "Install unknown apps" if Android asks.
+            Web / Windows PC / iPhone version: https://m9r1u5.github.io/Fence-e-COC/
+            On a PC open the link in Edge or Chrome and click Install. On iPhone open it in Safari → Share → Add to Home Screen.
           files: Fence-e-COC-*.apk
           make_latest: true
