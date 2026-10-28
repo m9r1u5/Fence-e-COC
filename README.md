@@ -35,6 +35,18 @@ Works on Android and iPhone, stores everything on the phone, and prints both for
 4. Download: repo main page → **Releases** → tap the latest → download **`Fence-e-COC-1.0.0.apk`**.
 5. Open the APK on the phone → allow *Install unknown apps* when asked → **Install**.
 
+## Install on a Windows PC or laptop
+
+The **Publish web app (GitHub Pages)** workflow puts the app online every time you push changes.
+
+1. Open **https://m9r1u5.github.io/Fence-e-COC/** in **Microsoft Edge** or **Google Chrome**.
+2. Click the **install icon** at the right end of the address bar, or the **⬇ Install** button in the app.
+   * No icon? In Edge: **⋯ → Apps → Install this site as an app**. In Chrome: **⋮ → Cast, save and share → Install page as app**.
+3. Click **Install**. Fence E-COC opens in its own window, gets a Start-menu and desktop shortcut, and works offline.
+4. To see the same certificates as on your phone, turn on **Settings → Sync between phone and PC**.
+
+If the link shows *404*: in the repo go to **Settings → Pages → Source → GitHub Actions**, then **Actions → Publish web app → Run workflow**. A private repo needs GitHub Pro for Pages; otherwise make the repo public. Your certificate data is never in this repo.
+
 ## 3. Install on iPhone / iPad
 
 1. Open **https://m9r1u5.github.io/Fence-e-COC/** in **Safari**.

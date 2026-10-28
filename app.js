@@ -21,6 +21,7 @@ const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
 const clone = o => JSON.parse(JSON.stringify(o || {}));
 const isCap = () => !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const isWindowsPC = () => /windows/i.test(navigator.userAgent) || /^win/i.test(navigator.platform || '');
 const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const CACHE_PREFIX = 'fence-ecoc-';
@@ -576,12 +577,12 @@ async function homeView() {
     list.replaceChildren(...(hits.length ? hits.map(cocCard) : [el('div', { class: 'empty' }, recs.length ? 'No matches.' : 'No certificates yet. Tap “New Fence COC” to start.')]));
   };
   search.oninput = draw;
-  app().replaceChildren(
+  app().replaceChildren(...[ // (nulls removed below)
     el('div', { class: 'row' }, el('button', { class: 'btn primary', style: 'flex:1;font-size:17px', onclick: () => nav('coc', 'new') }, '＋ New Fence COC')),
     el('div', { class: 'note', style: 'margin-top:8px' }, 'Next number: ', el('b', {}, numLabel(previewNumber())), '  ·  ', recs.length + ' saved'),
     syncOn() ? el('div', { class: 'note syncline' }, '☁ ', el('span', { class: 'syncst' }, syncStatusText()), ' · ', el('a', { href: '#', onclick: e => { e.preventDefault(); syncNow(true); } }, 'Sync now')) : null,
     ...duplicateNumbers(recs).map(n => el('div', { class: 'card warn' }, '⚠ ', el('b', {}, numLabel(n)), ' was issued on two devices before they synced, so two certificates now have this number. Open the one that has not been handed over, tap “New COC, same details” to re-issue it under a new number, then delete the duplicate.')),
-    search, list, el('div', { class: 'ver' }, 'Fence E-COC v' + APP_VERSION + ' · for registered electric fence installers only · ' + (syncOn() ? 'synced with your other devices through your private GitHub repository' : 'data is stored on this device only — back it up or turn on sync in Settings') + ' · ', el('a', { href: '#', onclick: e => { e.preventDefault(); showTerms(); } }, 'Terms of use')));
+    search, list, el('div', { class: 'ver' }, 'Fence E-COC v' + APP_VERSION + ' · for registered electric fence installers only · ' + (syncOn() ? 'synced with your other devices through your private GitHub repository' : 'data is stored on this device only — back it up or turn on sync in Settings') + ' · ', el('a', { href: '#', onclick: e => { e.preventDefault(); showTerms(); } }, 'Terms of use'))].filter(Boolean));
   draw();
 }
 function cocCard(r) {
@@ -847,7 +848,14 @@ function installHelp() {
   const and = el('div', {}, el('h4', {}, '🤖 Android (Chrome)'), el('ol', { class: 'steps' },
     el('li', {}, 'Tap the ⋮ menu at the top-right of Chrome.'), el('li', {}, 'Tap “Install app” or “Add to Home screen”.'), el('li', {}, 'Confirm. Open Fence E-COC from your home screen.'),
     el('li', {}, 'Or install the Android app (APK) from the download page: ', el('a', { href: APK_URL, target: '_blank', rel: 'noopener' }, 'Releases'))));
-  openModal(el('div', {}, el('h3', {}, 'Install Fence E-COC'), isIOS() ? ios : and, isIOS() ? and : ios, el('button', { class: 'btn block', onclick: closeModal }, 'Close')));
+  const pc = el('div', {}, el('h4', {}, '💻 Windows PC or laptop (Edge or Chrome)'), el('ol', { class: 'steps' },
+    el('li', {}, 'Open ', el('b', {}, APP_URL), ' in Microsoft Edge or Google Chrome.'),
+    el('li', {}, 'Click the install icon at the right end of the address bar (a small screen with an arrow, or “App available”). ',
+      'No icon? Edge: ⋯ menu → Apps → “Install this site as an app”. Chrome: ⋮ menu → “Cast, save and share” → “Install page as app”.'),
+    el('li', {}, 'Click “Install”. Fence E-COC opens in its own window and gets a Start-menu and desktop shortcut. It works offline.'),
+    el('li', {}, 'To have the same certificates on your phone and PC, turn on sync: Settings → “Sync between phone and PC”.')));
+  const order = isWindowsPC() ? [pc, and, ios] : isIOS() ? [ios, and, pc] : [and, ios, pc];
+  openModal(el('div', {}, el('h3', {}, 'Install Fence E-COC'), ...order, el('button', { class: 'btn block', onclick: closeModal }, 'Close')));
 }
 async function doInstall() {
   if (isCap()) return toast('This is the installed Android app');
